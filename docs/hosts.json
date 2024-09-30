@@ -1,0 +1,13 @@
+{
+    "default": "myserver.com",
+    "hosts": [
+        {
+            "host": "localhost",
+        },
+        {
+            "host": "myserver.com",
+            "user": "john",
+            "identityFile": "/home/john/.ssh/id_rsa"
+        }
+    ]
+}
