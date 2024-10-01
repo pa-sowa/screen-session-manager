@@ -6,6 +6,7 @@ NewSessionDialog::NewSessionDialog(QWidget *parent)
     , ui(new Ui::NewSessionDialog)
 {
     ui->setupUi(this);
+    ui->commandLineEdit->setFocus();
 }
 
 NewSessionDialog::~NewSessionDialog()
@@ -26,4 +27,9 @@ QString NewSessionDialog::workingDirectory() const
 QString NewSessionDialog::sessionName() const
 {
     return ui->sessionNameLineEdit->text().trimmed();
+}
+
+bool NewSessionDialog::isKeepSessionAfterCommandTerminatesChecked() const
+{
+    return ui->keepSessionAfterCommandCheckBox->isChecked();
 }
