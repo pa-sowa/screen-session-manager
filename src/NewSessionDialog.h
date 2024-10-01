@@ -16,6 +16,7 @@ public:
     QString command() const;
     QString workingDirectory() const;
     QString sessionName() const;
+    bool isKeepSessionAfterCommandTerminatesChecked() const;
 
 private:
     Ui::NewSessionDialog *ui;

@@ -111,7 +111,8 @@ bool ScreenManager::hasSession(const QString &sessionId) const
 
 bool ScreenManager::createSession(const QString command,
                                   const QString &cwd,
-                                  const QString &sessionId)
+                                  const QString &sessionId,
+                                  bool keepSession)
 {
     QString cmd = "screen -dm";
     if (!sessionId.isEmpty()) {
@@ -126,6 +127,9 @@ bool ScreenManager::createSession(const QString command,
     QStringList commandArgs = command.split(' ', Qt::SkipEmptyParts);
     for (const QString &arg : commandArgs) {
         cmd += "'" + arg + "' ";
+    }
+    if (keepSession) {
+        cmd += "&& exec bash";
     }
     cmd += "\"";
 

@@ -145,9 +145,11 @@ void MainWidget::onNewSessionClicked()
     if (dialog.exec() == QDialog::Accepted) {
         auto host = currentHost();
         if (host) {
-            bool ok = host->screenModel->screenManager()->createSession(dialog.command(),
-                                                                        dialog.workingDirectory(),
-                                                                        dialog.sessionName());
+            bool ok = host->screenModel->screenManager()
+                          ->createSession(dialog.command(),
+                                          dialog.workingDirectory(),
+                                          dialog.sessionName(),
+                                          dialog.isKeepSessionAfterCommandTerminatesChecked());
             if (ok) {
                 host->screenModel->refresh();
             }

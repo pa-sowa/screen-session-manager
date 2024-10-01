@@ -45,7 +45,8 @@ public:
 
     bool createSession(const QString command,
                        const QString &cwd = {},
-                       const QString &sessionId = {});
+                       const QString &sessionId = {},
+                       bool keepSession = false);
 
 private:
     std::unique_ptr<ICommandExecutor> m_executor;
