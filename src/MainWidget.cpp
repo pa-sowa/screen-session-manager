@@ -4,6 +4,8 @@
 #include "ScreenSessionModel.h"
 #include "ShellCommandExecutor.h"
 #include "SshCommandExecutor.h"
+#include "SshHostConfig.h"
+#include "SshHostConfigDialog.h"
 #include "SshSession.h"
 #include <QDir>
 #include <QFile>
@@ -159,6 +161,10 @@ void MainWidget::onNewSessionClicked()
 
 void MainWidget::onEditHostsClicked()
 {
+    SshHostConfigDialog dialog(this);
+    if (dialog.exec() == QDialog::Accepted) {
+    }
+
     QString sampleJson = R"(
 {
     "default": "myserver.com",
@@ -309,27 +315,4 @@ void MainWidget::setupHeader()
 bool MainWidget::Host::isLocalhost() const
 {
     return name == "localhost";
-}
-
-bool MainWidget::SshHostConfig::isValid() const
-{
-    return !host.isEmpty() && !user.isEmpty();
-}
-
-QJsonObject MainWidget::SshHostConfig::toJson() const
-{
-    QJsonObject obj;
-    obj["host"] = host;
-    obj["user"] = user;
-    obj["identityFile"] = identityFile;
-    return obj;
-}
-
-MainWidget::SshHostConfig MainWidget::SshHostConfig::fromJson(const QJsonObject &json)
-{
-    SshHostConfig config;
-    config.host = json["host"].toString();
-    config.user = json["user"].toString();
-    config.identityFile = json["identityFile"].toString();
-    return config;
 }

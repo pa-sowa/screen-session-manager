@@ -30,7 +30,9 @@ set(PROJECT_SOURCES
         src/ScreenSessionModel.cpp src/ScreenSessionModel.h
         src/ShellCommandExecutor.cpp src/ShellCommandExecutor.h
         src/SshCommandExecutor.cpp src/SshCommandExecutor.h
+        src/SshHostConfig.h src/SshHostConfig.cpp
         src/SshSession.cpp src/SshSession.h
+        src/SshHostConfigDialog.cpp src/SshHostConfigDialog.h src/SshHostConfigDialog.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

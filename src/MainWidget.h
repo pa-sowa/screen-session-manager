@@ -39,17 +39,6 @@ private:
         bool isLocalhost() const;
     };
 
-    struct SshHostConfig
-    {
-        QString host;
-        QString user;
-        QString identityFile;
-
-        bool isValid() const;
-        QJsonObject toJson() const;
-        static SshHostConfig fromJson(const QJsonObject &json);
-    };
-
     void addHost(const QString &name, const QString &user, const QString &identityFile);
     const Host *currentHost() const;
     const ScreenSession *selectedSession() const;
