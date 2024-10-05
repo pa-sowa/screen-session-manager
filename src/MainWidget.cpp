@@ -7,6 +7,7 @@
 #include "SshHostConfig.h"
 #include "SshHostConfigDialog.h"
 #include "SshSession.h"
+#include "terminal/terminalview.h"
 #include <QDir>
 #include <QFile>
 #include <QFontMetrics>
@@ -18,12 +19,14 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 
+using TerminalSolution::TerminalView;
+
 MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::MainWidget)
 {
     ui->setupUi(this);
-
+    setupTerminal();
     loadHosts();
 
     connect(ui->editHostsButton, &QPushButton::clicked, this, &MainWidget::onEditHostsClicked);
@@ -103,9 +106,11 @@ void MainWidget::onViewScreenClicked()
     auto host = currentHost();
     auto session = selectedSession();
     if (host && session) {
-        QString output = host->screenModel->screenManager()->retrieveSessionOutput(session->id);
+        QByteArray output = host->screenModel->screenManager()->retrieveSessionOutput(session->id);
         ui->plainTextEdit->setPlainText(output);
         ui->screenOfLabel->setText(tr("Screen of: ") + session->id + "@" + host->name);
+        m_terminalView->clearContents();
+        m_terminalView->writeToTerminal(output, true);
     }
 }
 
@@ -310,6 +315,21 @@ void MainWidget::setupHeader()
     header->resizeSection(ScreenSessionModel::StartedColumn,
                           header->fontMetrics().horizontalAdvance(ScreenSessionModel::dateFormat())
                               + 20);
+}
+
+void MainWidget::setupTerminal()
+{
+    m_terminalView = new TerminalSolution::TerminalView(this);
+    ui->previewVerticalLayout->addWidget(m_terminalView);
+
+    std::array<QColor, 20> colors;
+    // TODO: configure other colors
+    colors[(size_t) TerminalView::WidgetColorIdx::Background] = QColor(Qt::black);
+    colors[(size_t) TerminalView::WidgetColorIdx::Foreground] = QColor(Qt::white);
+    colors[(size_t) TerminalView::WidgetColorIdx::Selection] = QColor(Qt::darkBlue);
+    colors[(size_t) TerminalView::WidgetColorIdx::FindMatch] = QColor(Qt::yellow);
+
+    m_terminalView->setColors(colors);
 }
 
 bool MainWidget::Host::isLocalhost() const

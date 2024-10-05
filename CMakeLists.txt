@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ScreenSessionManager VERSION 0.1 LANGUAGES CXX)
+project(ScreenSessionManager VERSION 0.1 LANGUAGES C CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -58,9 +58,12 @@ else()
     endif()
 endif()
 
+add_subdirectory(src/terminal)
+
 target_link_libraries(ScreenSessionManager PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     ${LIBSSH_LIBRARIES}
+    TerminalLib
 )
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.

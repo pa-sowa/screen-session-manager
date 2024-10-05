@@ -4,6 +4,9 @@
 class ScreenSession;
 class SshSession;
 class ScreenSessionModel;
+namespace TerminalSolution {
+class TerminalView;
+}
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -47,8 +50,10 @@ private:
     void saveHosts();
     void loadHosts();
     void setupHeader();
+    void setupTerminal();
 
     Ui::MainWidget *ui;
+    TerminalSolution::TerminalView *m_terminalView = nullptr;
     QList<Host> m_hosts;
     QString m_defaultHost;
     bool m_wasHeaderSetup = false;

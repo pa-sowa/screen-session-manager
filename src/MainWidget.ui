@@ -109,7 +109,7 @@
       </layout>
      </widget>
      <widget class="QWidget" name="layoutWidget">
-      <layout class="QVBoxLayout" name="verticalLayout">
+      <layout class="QVBoxLayout" name="previewVerticalLayout">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
