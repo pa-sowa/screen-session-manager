@@ -2,7 +2,7 @@
 #include <QDebug>
 #include <QProcess>
 
-std::optional<QStringList> ShellCommandExecutor::executeCommand(const QString &command)
+std::optional<QByteArray> ShellCommandExecutor::executeCommand(const QString &command)
 {
     QProcess process;
     process.startCommand(command);
@@ -13,8 +13,5 @@ std::optional<QStringList> ShellCommandExecutor::executeCommand(const QString &c
         return std::nullopt;
     }
 
-    // Split the output into lines and return
-    QString output = process.readAllStandardOutput();
-    QStringList outputLines = output.split('\n', Qt::SkipEmptyParts);
-    return outputLines;
+    return process.readAllStandardOutput();
 }

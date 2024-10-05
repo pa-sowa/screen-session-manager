@@ -23,7 +23,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
         src/main.cpp
-        src/ICommandExecutor.h
+        src/AbstractCommandExecutor.h src/AbstractCommandExecutor.cpp
         src/MainWidget.cpp src/MainWidget.h src/MainWidget.ui
         src/NewSessionDialog.h src/NewSessionDialog.cpp src/NewSessionDialog.ui
         src/ScreenManager.cpp src/ScreenManager.h

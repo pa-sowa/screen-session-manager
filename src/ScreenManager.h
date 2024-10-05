@@ -1,5 +1,5 @@
 #pragma once
-#include "ICommandExecutor.h"
+#include "AbstractCommandExecutor.h"
 #include <memory>
 #include <optional>
 #include <QDateTime>
@@ -28,10 +28,10 @@ public:
         QString toString() const;
     };
 
-    ScreenManager(std::unique_ptr<ICommandExecutor> executor, QObject *parent = nullptr);
+    ScreenManager(std::unique_ptr<AbstractCommandExecutor> executor, QObject *parent = nullptr);
 
     QList<ScreenSession> listSessions() const;
-    QString retrieveSessionOutput(const QString &sessionId) const;
+    QByteArray retrieveSessionOutput(const QString &sessionId) const;
     /// Returns the last process in the session (not including screen).
     std::optional<Process> lastProcess(const QString &sessionId) const;
     QList<Process> listProcesses(const QString &sessionId) const;
@@ -49,5 +49,5 @@ public:
                        bool keepSession = false);
 
 private:
-    std::unique_ptr<ICommandExecutor> m_executor;
+    std::unique_ptr<AbstractCommandExecutor> m_executor;
 };

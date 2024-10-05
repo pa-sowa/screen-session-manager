@@ -1,7 +1,7 @@
 #include "ScreenManager.h"
 #include <QRegularExpression>
 
-ScreenManager::ScreenManager(std::unique_ptr<ICommandExecutor> executor, QObject *parent)
+ScreenManager::ScreenManager(std::unique_ptr<AbstractCommandExecutor> executor, QObject *parent)
     : QObject(parent)
     , m_executor(std::move(executor))
 {}
@@ -10,7 +10,7 @@ QList<ScreenSession> ScreenManager::listSessions() const
 {
     QList<ScreenSession> sessions;
 
-    std::optional<QStringList> output = m_executor->executeCommand(
+    std::optional<QStringList> output = m_executor->executeCommandLines(
         "bash -c \"LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 screen -ls\"");
     if (output) {
         QRegularExpression regex(
@@ -31,17 +31,17 @@ QList<ScreenSession> ScreenManager::listSessions() const
     return sessions;
 }
 
-QString ScreenManager::retrieveSessionOutput(const QString &sessionId) const
+QByteArray ScreenManager::retrieveSessionOutput(const QString &sessionId) const
 {
     QString filePath = "/tmp/" + sessionId + ".hardcopy";
     QString command = "screen -S " + sessionId + " -X hardcopy " + filePath;
-    std::optional<QStringList> output = m_executor->executeCommand(command);
+    std::optional<QByteArray> output = m_executor->executeCommand(command);
     if (output) {
         command = "cat " + filePath;
-        std::optional<QStringList> sessionOutput = m_executor->executeCommand(command);
+        std::optional<QByteArray> sessionOutput = m_executor->executeCommand(command);
         m_executor->executeCommand("rm " + filePath);
         if (sessionOutput) {
-            return sessionOutput->join("\n");
+            return *sessionOutput;
         }
     }
 
@@ -63,7 +63,7 @@ QList<ScreenManager::Process> ScreenManager::listProcesses(const QString &sessio
     session.id = sessionId;
 
     QString command = QString("pstree -p %1").arg(session.pid());
-    std::optional<QStringList> output = m_executor->executeCommand(command);
+    std::optional<QStringList> output = m_executor->executeCommandLines(command);
     if (output) {
         QList<Process> ret;
         QStringList processes = (*output)[0].split("---");
@@ -91,7 +91,7 @@ QString ScreenManager::workingDirectory(const QString &sessionId) const
 
 QString ScreenManager::workingDirectory(quint32 processPid) const
 {
-    std::optional<QStringList> output = m_executor->executeCommand(
+    std::optional<QStringList> output = m_executor->executeCommandLines(
         QString("readlink /proc/%1/cwd").arg(processPid));
     if (output && !output->isEmpty()) {
         return (*output)[0];

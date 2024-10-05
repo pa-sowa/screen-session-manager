@@ -1,8 +1,8 @@
 #pragma once
-#include "ICommandExecutor.h"
+#include "AbstractCommandExecutor.h"
 
-class ShellCommandExecutor : public ICommandExecutor
+class ShellCommandExecutor : public AbstractCommandExecutor
 {
 public:
-    std::optional<QStringList> executeCommand(const QString &command) override;
+    std::optional<QByteArray> executeCommand(const QString &command) override;
 };

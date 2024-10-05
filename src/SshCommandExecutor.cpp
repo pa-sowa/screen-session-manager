@@ -27,7 +27,7 @@ SshCommandExecutor::SshCommandExecutor(ssh_session_struct *session)
     : m_session(session)
 {}
 
-std::optional<QStringList> SshCommandExecutor::executeCommand(const QString &command)
+std::optional<QByteArray> SshCommandExecutor::executeCommand(const QString &command)
 {
     SshChannelPtr channel{ssh_channel_new(m_session)};
     if (!channel) {
@@ -48,25 +48,11 @@ std::optional<QStringList> SshCommandExecutor::executeCommand(const QString &com
     char buffer[256];
     int nbytes;
     QString bufferString; // Used to store and process partial lines
-    QStringList output;
+    QByteArray output;
 
     while ((nbytes = ssh_channel_read(channel.get(), buffer, sizeof(buffer), 0)) > 0) {
-        // Append data to bufferString and split into lines
-        bufferString += QString::fromUtf8(buffer, nbytes);
-
-        int newLineIndex;
-        while ((newLineIndex = bufferString.indexOf('\n')) != -1) {
-            QString line = bufferString.left(newLineIndex).trimmed();
-            output.append(line); // Add the full line to output
-
-            // Remove the processed line from bufferString
-            bufferString = bufferString.mid(newLineIndex + 1);
-        }
+        output.append(buffer, nbytes);
     }
 
-    // Add any remaining data in bufferString as the last line if it's non-empty
-    if (!bufferString.isEmpty()) {
-        output.append(bufferString.trimmed());
-    }
     return output;
 }
