@@ -15,6 +15,7 @@ struct ScreenSession
 
     bool operator==(const ScreenSession &other) const;
 };
+Q_DECLARE_METATYPE(ScreenSession);
 
 class ScreenManager : public QObject
 {

@@ -1,4 +1,7 @@
 #include "ScreenSessionModel.h"
+#include "SingleThreadTaskExecutor.h"
+#include <QFutureWatcher>
+#include <QThread>
 #include <QTimer>
 #include <QtConcurrent/QtConcurrent>
 
@@ -9,6 +12,17 @@ ScreenSessionModel::ScreenSessionModel(ScreenManager *screen, QObject *parent)
     , m_screen(screen)
 {
     assert(m_screen);
+
+    m_executor = new SingleThreadTaskExecutor();
+    m_executor->start();
+}
+
+ScreenSessionModel::~ScreenSessionModel()
+{
+    m_executor->stop();
+    m_executor->wait();
+    delete m_executor;
+    qDebug() << "ScreenSessionModel::~ScreenSessionModel() thread stopped";
 }
 
 ScreenManager *ScreenSessionModel::screenManager() const
@@ -16,12 +30,82 @@ ScreenManager *ScreenSessionModel::screenManager() const
     return m_screen;
 }
 
+TaskExecutor *ScreenSessionModel::taskExecutor() const
+{
+    return m_executor;
+}
+
 void ScreenSessionModel::refresh()
 {
     beginResetModel();
     m_rows.clear();
     endResetModel();
+    /*
+    auto listSessionsTask = [this]() {
+        QList<ScreenSession> sessions = m_screen->listSessions();
+        return QVariant::fromValue(sessions);
+    };
 
+    QFuture<QVariant> sessionListFuture = m_executor->addTask(listSessionsTask);
+    QFutureWatcher<QVariant> *watcher = new QFutureWatcher<QVariant>();
+    connect(watcher, &QFutureWatcher<QVariant>::finished, this, [this, watcher]() {
+        watcher->deleteLater();
+    });
+
+    // auto listProcessesTask = [this]() {
+    //     QList<ScreenSession> sessions = m_screen->listSessions();
+    //     return QVariant::fromValue(sessions);
+    // };
+
+    m_executor->addTask(listSessionsTask, this, [this](QVariant result) {
+        QList<ScreenSession> sessions = result.value<QList<ScreenSession>>();
+        setSessions(sessions);
+    });
+*/
+
+    auto future2 = m_executor->addTask([this]() {
+        auto sessions = m_screen->listSessions();
+        postSessions(sessions);
+
+        for (const auto &session : sessions) {
+            QString sessionId = session.id;
+            m_executor->addTask([=]() {
+                if (auto process = m_screen->lastProcess(session.id)) {
+                    postLastProcess(session.id, process->name);
+
+                    QString dir = m_screen->workingDirectory(process->pid);
+                    if (!dir.isEmpty()) {
+                        postDirectory(session.id, dir);
+                    }
+                }
+                return QVariant();
+            });
+        }
+        return QVariant();
+    });
+
+    /*
+    auto future = m_executor->addTask([this]() {
+        auto sessions = m_screen->listSessions();
+        postSessions(sessions);
+
+        for (const auto &session : sessions) {
+            if (auto process = m_screen->lastProcess(session.id)) {
+                postLastProcess(session.id, process->name);
+
+                QString dir = m_screen->workingDirectory(process->pid);
+                if (!dir.isEmpty()) {
+                    postDirectory(session.id, dir);
+                }
+            }
+        }
+        return QVariant();
+    });
+    */
+
+    /*
+     * First version using QtConcurrent::run
+     *
     auto future = QtConcurrent::run([this]() {
         auto sessions = m_screen->listSessions();
         QMetaObject::invokeMethod(this,
@@ -48,6 +132,7 @@ void ScreenSessionModel::refresh()
             }
         }
     });
+*/
 }
 
 void ScreenSessionModel::setSessions(QList<ScreenSession> sessions)
@@ -102,6 +187,32 @@ int ScreenSessionModel::rowIndex(const QString &sessionId)
         }
     }
     return -1;
+}
+
+void ScreenSessionModel::postSessions(const QList<ScreenSession> &sessions)
+{
+    QMetaObject::invokeMethod(this,
+                              "setSessions",
+                              Qt::QueuedConnection,
+                              Q_ARG(QList<ScreenSession>, sessions));
+}
+
+void ScreenSessionModel::postLastProcess(const QString &sessionId, const QString &lastProcess)
+{
+    QMetaObject::invokeMethod(this,
+                              "setLastProcess",
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, sessionId),
+                              Q_ARG(QString, lastProcess));
+}
+
+void ScreenSessionModel::postDirectory(const QString &sessionId, const QString &directory)
+{
+    QMetaObject::invokeMethod(this,
+                              "setDirectory",
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, sessionId),
+                              Q_ARG(QString, directory));
 }
 
 QVariant ScreenSessionModel::headerData(int section, Qt::Orientation orientation, int role) const

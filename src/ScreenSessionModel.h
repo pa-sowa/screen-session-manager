@@ -2,6 +2,10 @@
 #include "ScreenManager.h"
 #include <QAbstractTableModel>
 
+class QThread;
+class SingleThreadTaskExecutor;
+class TaskExecutor;
+
 class ScreenSessionModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -17,8 +21,10 @@ public:
     };
 
     explicit ScreenSessionModel(ScreenManager *screen, QObject *parent = nullptr);
+    ~ScreenSessionModel();
 
     ScreenManager *screenManager() const;
+    TaskExecutor *taskExecutor() const;
 
     QVariant headerData(int section,
                         Qt::Orientation orientation,
@@ -52,9 +58,13 @@ private:
 
     Row *row(const QString &sessionId);
     int rowIndex(const QString &sessionId);
+    void postSessions(const QList<ScreenSession> &sessions);
+    void postLastProcess(const QString &sessionId, const QString &lastProcess);
+    void postDirectory(const QString &sessionId, const QString &directory);
 
     ScreenManager *m_screen = nullptr;
     QList<ScreenSession> m_sessions;
     QList<Row> m_rows;
+    SingleThreadTaskExecutor *m_executor = nullptr;
     static QString s_dateFormat;
 };

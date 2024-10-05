@@ -7,6 +7,7 @@
 #include "SshHostConfig.h"
 #include "SshHostConfigDialog.h"
 #include "SshSession.h"
+#include "TaskExecutor.h"
 #include <QDir>
 #include <QFile>
 #include <QFontMetrics>
@@ -17,6 +18,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QStandardPaths>
+#include <QThread>
 
 MainWidget::MainWidget(QWidget *parent)
     : QWidget(parent)
@@ -41,6 +43,8 @@ MainWidget::MainWidget(QWidget *parent)
             &QTableView::customContextMenuRequested,
             this,
             &MainWidget::onCustomContextMenuRequested);
+
+    qDebug() << "Application started, main thread id: " << QThread::currentThreadId();
 
     int hostIndex = 0;
     if (!m_defaultHost.isEmpty()) {
@@ -103,9 +107,20 @@ void MainWidget::onViewScreenClicked()
     auto host = currentHost();
     auto session = selectedSession();
     if (host && session) {
-        QString output = host->screenModel->screenManager()->retrieveSessionOutput(session->id);
-        ui->plainTextEdit->setPlainText(output);
-        ui->screenOfLabel->setText(tr("Screen of: ") + session->id + "@" + host->name);
+        QString sessionId = session->id;
+        auto screen = host->screenModel->screenManager();
+        auto taskExecutor = host->screenModel->taskExecutor();
+        taskExecutor->prependTask(
+            [screen, sessionId] {
+                //
+                return screen->retrieveSessionOutput(sessionId);
+            },
+            this,
+            [this, sessionId, host](QVariant result) {
+                const QString &output = result.toString();
+                ui->plainTextEdit->setPlainText(output);
+                ui->screenOfLabel->setText(tr("Screen of: ") + sessionId + "@" + host->name);
+            });
     }
 }
 
