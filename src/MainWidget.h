@@ -1,6 +1,7 @@
 #pragma once
 #include <QWidget>
 
+class QSortFilterProxyModel;
 class ScreenSession;
 class SshSession;
 class ScreenSessionModel;
@@ -27,6 +28,7 @@ private slots:
     void onQuitScreenClicked();
     void onNewSessionClicked();
     void onEditHostsClicked();
+    void onFilterChanged();
 
 private:
     struct Host
@@ -49,6 +51,7 @@ private:
     void setupHeader();
 
     Ui::MainWidget *ui;
+    QSortFilterProxyModel *m_proxyModel = nullptr;
     QList<Host> m_hosts;
     QString m_defaultHost;
     bool m_wasHeaderSetup = false;
