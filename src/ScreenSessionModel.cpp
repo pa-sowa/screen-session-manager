@@ -63,6 +63,24 @@ void ScreenSessionModel::refresh()
     });
 */
 
+    /*
+ * Courotines code:
+ *
+    auto sessions = co_await m_screen->listSessions();
+    setSessions(sessions);
+
+    for (const auto &session : sessions) {
+        if (auto process = co_await m_screen->lastProcess(session.id)) {
+            setLastProcess(session.id, process->name);
+
+            QString dir = co_await m_screen->workingDirectory(process->pid);
+            if (!dir.isEmpty()) {
+                setDirectory(session.id, dir);
+            }
+        }
+    }
+*/
+
     auto future2 = m_executor->addTask([this]() {
         auto sessions = m_screen->listSessions();
         postSessions(sessions);

@@ -7,10 +7,9 @@ TaskExecutor::TaskExecutor(QObject *parent)
     : QObject(parent)
 {}
 
-TaskExecutor::~TaskExecutor() {}
-
 void TaskExecutor::addTask(std::function<QVariant()> lambda,
-                           std::function<void(QVariant)> resultCallback)
+                           std::function<void(QVariant)> resultCallback,
+                           Priority priority)
 {
     Q_ASSERT(lambda);
     addTask(lambda, nullptr, resultCallback);
@@ -18,25 +17,22 @@ void TaskExecutor::addTask(std::function<QVariant()> lambda,
 
 void TaskExecutor::addTask(std::function<QVariant()> lambda,
                            QObject *callbackObject,
-                           std::function<void(QVariant)> resultCallback)
+                           std::function<void(QVariant)> resultCallback,
+                           Priority priority)
 {
     Q_ASSERT(lambda);
+    Q_ASSERT(callbackObject);
+
+    connect(callbackObject, &QObject::destroyed, this, &TaskExecutor::onCallbackObjectDestroyed);
+
     QMutexLocker locker(&m_mutex);
-    m_taskQueue.enqueue({std::move(lambda), std::move(resultCallback), callbackObject});
+    int index = indexForInsertion(priority);
+    m_taskQueue.insert(index,
+                       {priority, std::move(lambda), std::move(resultCallback), callbackObject});
     m_taskAvailable.wakeOne();
 }
 
-void TaskExecutor::prependTask(std::function<QVariant()> lambda,
-                               QObject *callbackObject,
-                               std::function<void(QVariant)> resultCallback)
-{
-    Q_ASSERT(lambda);
-    QMutexLocker locker(&m_mutex);
-    m_taskQueue.prepend({std::move(lambda), std::move(resultCallback), callbackObject});
-    m_taskAvailable.wakeOne();
-}
-
-QFuture<QVariant> TaskExecutor::addTask(std::function<QVariant()> lambda)
+QFuture<QVariant> TaskExecutor::addTask(std::function<QVariant()> lambda, Priority priority)
 {
     Q_ASSERT(lambda);
     QMutexLocker locker(&m_mutex);
@@ -44,7 +40,8 @@ QFuture<QVariant> TaskExecutor::addTask(std::function<QVariant()> lambda)
     QFutureInterface<QVariant> futureInterface;
     futureInterface.reportStarted();
 
-    m_taskQueue.enqueue({std::move(lambda), {}, nullptr, futureInterface});
+    int index = indexForInsertion(priority);
+    m_taskQueue.insert(index, {priority, std::move(lambda), {}, nullptr, futureInterface});
     m_taskAvailable.wakeOne();
     return futureInterface.future();
 }
@@ -96,4 +93,29 @@ void TaskExecutor::run()
             qDebug() << "TaskExecutor: no lambda to execute";
         }
     }
+}
+
+void TaskExecutor::onCallbackObjectDestroyed()
+{
+    QObject *callbackObject = qobject_cast<QObject *>(sender());
+    Q_ASSERT(callbackObject);
+    QMutexLocker locker(&m_mutex);
+    QMutableListIterator<Task> it(m_taskQueue);
+    while (it.hasNext()) {
+        Task &task = it.next();
+        if (task.callbackObject == callbackObject) {
+            it.remove();
+        }
+    }
+}
+
+int TaskExecutor::indexForInsertion(Priority priority) const
+{
+    for (int i = 0; i < m_taskQueue.size(); ++i) {
+        if (m_taskQueue[i].priority > priority) {
+            return i;
+        }
+    }
+
+    return m_taskQueue.size();
 }

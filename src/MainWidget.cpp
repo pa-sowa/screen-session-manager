@@ -110,7 +110,7 @@ void MainWidget::onViewScreenClicked()
         QString sessionId = session->id;
         auto screen = host->screenModel->screenManager();
         auto taskExecutor = host->screenModel->taskExecutor();
-        taskExecutor->prependTask(
+        taskExecutor->addTask(
             [screen, sessionId] {
                 //
                 return screen->retrieveSessionOutput(sessionId);
@@ -120,7 +120,8 @@ void MainWidget::onViewScreenClicked()
                 const QString &output = result.toString();
                 ui->plainTextEdit->setPlainText(output);
                 ui->screenOfLabel->setText(tr("Screen of: ") + sessionId + "@" + host->name);
-            });
+            },
+            TaskExecutor::Priority::High);
     }
 }
 
