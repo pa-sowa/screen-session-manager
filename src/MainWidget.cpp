@@ -16,6 +16,7 @@
 #include <QJsonObject>
 #include <QMenu>
 #include <QMessageBox>
+#include <QSortFilterProxyModel>
 #include <QStandardPaths>
 
 MainWidget::MainWidget(QWidget *parent)
@@ -26,6 +27,12 @@ MainWidget::MainWidget(QWidget *parent)
 
     loadHosts();
 
+    m_proxyModel = new QSortFilterProxyModel(this);
+    m_proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    m_proxyModel->setFilterKeyColumn(-1);
+    ui->tableView->setModel(m_proxyModel);
+    ui->tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+
     connect(ui->editHostsButton, &QPushButton::clicked, this, &MainWidget::onEditHostsClicked);
     connect(ui->newSessionButton, &QPushButton::clicked, this, &MainWidget::onNewSessionClicked);
     connect(ui->refreshButton, &QPushButton::clicked, this, &MainWidget::refresh);
@@ -34,13 +41,11 @@ MainWidget::MainWidget(QWidget *parent)
             this,
             &MainWidget::onHostCurrentIndexChanged);
     connect(ui->viewScreenButton, &QPushButton::clicked, this, &MainWidget::onViewScreenClicked);
-
-    // Add right-click context menu to the table view
-    ui->tableView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tableView,
             &QTableView::customContextMenuRequested,
             this,
             &MainWidget::onCustomContextMenuRequested);
+    connect(ui->filterLineEdit, &QLineEdit::textChanged, this, &MainWidget::onFilterChanged);
 
     int hostIndex = 0;
     if (!m_defaultHost.isEmpty()) {
@@ -82,11 +87,11 @@ void MainWidget::refresh()
 void MainWidget::onHostCurrentIndexChanged(int index)
 {
     if (index == -1) {
-        ui->tableView->setModel(nullptr);
+        m_proxyModel->setSourceModel(nullptr);
     } else {
         auto &host = m_hosts[index];
-        if (ui->tableView->model() != host.screenModel) {
-            ui->tableView->setModel(host.screenModel);
+        if (m_proxyModel->sourceModel() != host.screenModel) {
+            m_proxyModel->setSourceModel(host.screenModel);
             if (!m_wasHeaderSetup) {
                 setupHeader();
             }
@@ -188,6 +193,11 @@ void MainWidget::onEditHostsClicked()
                                  .arg(sampleJson));
 }
 
+void MainWidget::onFilterChanged()
+{
+    m_proxyModel->setFilterWildcard(ui->filterLineEdit->text());
+}
+
 void MainWidget::addHost(const QString &name, const QString &user, const QString &identityFile)
 {
     Host host;
@@ -225,6 +235,7 @@ const ScreenSession *MainWidget::selectedSession() const
     if (!index.isValid()) {
         return nullptr;
     }
+    index = m_proxyModel->mapToSource(index);
     return currentHost()->screenModel->session(index);
 }
 
@@ -232,6 +243,7 @@ QList<ScreenSession> MainWidget::selectedSessions() const
 {
     QList<ScreenSession> sessions;
     for (auto index : ui->tableView->selectionModel()->selectedIndexes()) {
+        index = m_proxyModel->mapToSource(index);
         auto session = currentHost()->screenModel->session(index);
         if (session) {
             sessions.append(*session);
