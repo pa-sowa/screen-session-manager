@@ -1,4 +1,5 @@
 #include "ScreenSessionModel.h"
+#include "AsyncScreenManager.h"
 #include "SingleThreadTaskExecutor.h"
 #include <QFutureWatcher>
 #include <QThread>
@@ -13,6 +14,7 @@ ScreenSessionModel::ScreenSessionModel(ScreenManager *screen, QObject *parent)
 {
     assert(m_screen);
 
+    m_asyncScreen = new AsyncScreenManager(screen, this);
     m_executor = new SingleThreadTaskExecutor();
     m_executor->start();
 }
@@ -81,6 +83,26 @@ void ScreenSessionModel::refresh()
     }
 */
 
+    m_asyncScreen->listSessions().then([=](QList<ScreenSession> sessions) {
+        postSessions(sessions);
+
+        for (const auto &session : sessions) {
+            QString sessionId = session.id;
+            m_asyncScreen->lastProcess(sessionId).then(
+                [=](std::optional<ScreenManager::Process> process) {
+                    if (process) {
+                        postLastProcess(sessionId, process->name);
+
+                        m_asyncScreen->workingDirectory(process->pid).then([=](QString dir) {
+                            if (!dir.isEmpty()) {
+                                postDirectory(sessionId, dir);
+                            }
+                        });
+                    }
+                });
+        }
+    });
+    /*
     auto future2 = m_executor->addTask([this]() {
         auto sessions = m_screen->listSessions();
         postSessions(sessions);
@@ -101,7 +123,7 @@ void ScreenSessionModel::refresh()
         }
         return QVariant();
     });
-
+*/
     /*
     auto future = m_executor->addTask([this]() {
         auto sessions = m_screen->listSessions();

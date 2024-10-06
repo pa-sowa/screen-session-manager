@@ -2,6 +2,7 @@
 #include "ScreenManager.h"
 #include <QAbstractTableModel>
 
+class AsyncScreenManager;
 class QThread;
 class SingleThreadTaskExecutor;
 class TaskExecutor;
@@ -63,6 +64,7 @@ private:
     void postDirectory(const QString &sessionId, const QString &directory);
 
     ScreenManager *m_screen = nullptr;
+    AsyncScreenManager *m_asyncScreen = nullptr;
     QList<ScreenSession> m_sessions;
     QList<Row> m_rows;
     SingleThreadTaskExecutor *m_executor = nullptr;
