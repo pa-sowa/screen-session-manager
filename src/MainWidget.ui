@@ -161,6 +161,27 @@
        <item>
         <widget class="QPlainTextEdit" name="plainTextEdit"/>
        </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Input:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="inputLineEdit"/>
+         </item>
+         <item>
+          <widget class="QPushButton" name="sendInputButton">
+           <property name="text">
+            <string>Send</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
       </layout>
      </widget>
     </widget>

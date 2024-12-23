@@ -29,6 +29,7 @@ private slots:
     void onNewSessionClicked();
     void onEditHostsClicked();
     void onFilterChanged();
+    void onInputLineReturnPressed();
 
 private:
     struct Host

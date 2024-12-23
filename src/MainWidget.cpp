@@ -48,6 +48,10 @@ MainWidget::MainWidget(QWidget *parent)
             this,
             &MainWidget::onCustomContextMenuRequested);
     connect(ui->filterLineEdit, &QLineEdit::textChanged, this, &MainWidget::onFilterChanged);
+    connect(ui->inputLineEdit,
+            &QLineEdit::returnPressed,
+            this,
+            &MainWidget::onInputLineReturnPressed);
 
     qDebug() << "Application started, main thread id: " << QThread::currentThreadId();
 
@@ -212,6 +216,24 @@ void MainWidget::onEditHostsClicked()
 void MainWidget::onFilterChanged()
 {
     m_proxyModel->setFilterWildcard(ui->filterLineEdit->text());
+}
+
+void MainWidget::onInputLineReturnPressed()
+{
+    auto host = currentHost();
+    if (!host) {
+        return;
+    }
+
+    auto session = selectedSession();
+    if (!session) {
+        return;
+    }
+
+    auto &screen = *host->screenModel->screenManager();
+    screen.sendInput(session->id, ui->inputLineEdit->text() + "\n");
+    ui->inputLineEdit->clear();
+    onViewScreenClicked();
 }
 
 void MainWidget::addHost(const QString &name, const QString &user, const QString &identityFile)

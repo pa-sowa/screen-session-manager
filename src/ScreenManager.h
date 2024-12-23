@@ -40,6 +40,7 @@ public:
     bool isIdle(const QString &sessionId) const;
     QString workingDirectory(const QString &sessionId) const;
     QString workingDirectory(quint32 processPid) const;
+    void sendInput(const QString &sessionId, const QString &input) const;
 
     void quit(const QString &sessionId);
     bool hasSession(const QString &sessionId) const;

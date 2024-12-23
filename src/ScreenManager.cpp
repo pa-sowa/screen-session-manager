@@ -99,6 +99,14 @@ QString ScreenManager::workingDirectory(quint32 processPid) const
     return {};
 }
 
+void ScreenManager::sendInput(const QString &sessionId, const QString &input) const
+{
+    QString escapedInput = input;
+    escapedInput.replace("\"", "\\\"");
+
+    m_executor->executeCommand("screen -S " + sessionId + " -X stuff \"" + escapedInput + "\"");
+}
+
 void ScreenManager::quit(const QString &sessionId)
 {
     m_executor->executeCommand("screen -S " + sessionId + " -X quit");
